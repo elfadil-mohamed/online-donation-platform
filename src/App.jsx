@@ -66,6 +66,12 @@ category: "Other"
 }
 ];
 
+/**
+ * Normalizes the campaign category for display and filtering.
+ *
+ * @param {{ category?: string } | null | undefined} campaign - Campaign record returned from the API or local demo data.
+ * @returns {string} The category label shown to the user.
+ */
 function getCategory(campaign) {
 return campaign && campaign.category
 ? campaign.category
@@ -124,6 +130,13 @@ category
 };
 }
 
+/**
+ * Merges backend campaigns with local demo campaigns while keeping duplicates out of the list.
+ * Demo campaigns act as a fallback when the server is unavailable or when a campaign is not yet stored.
+ *
+ * @param {Array<object>} [serverCampaigns=[]] - Campaigns returned by the Express API.
+ * @returns {Array<object>} A de-duped campaign list sorted as server data first, then demo data.
+ */
 function mergeCampaigns(serverCampaigns) {
 const list = Array.isArray(serverCampaigns)
 ? serverCampaigns.map(normalizeCampaign)
@@ -135,6 +148,7 @@ return String(item.name).toLowerCase();
 })
 );
 
+// Keep the default project content available even when MongoDB is down.
 const demos = demoCampaigns
 .filter(function (item) {
 return !serverNames.has(String(item.name).toLowerCase());
@@ -157,7 +171,15 @@ if (goal <= 0) return 0;
 return Math.min(100, Math.round((raised / goal) * 100));
 }
 
-function App() {
+/**
+ * Root component for the GiveHope donation platform.
+ *
+ * It loads campaigns and donation history, renders the public donation experience,
+ * and provides an admin workflow for creating, updating, and deleting campaigns.
+ *
+ * @returns {JSX.Element} The donation platform UI.
+ */
+export default function App() {
 const [campaigns, setCampaigns] = useState([]);
 const [donations, setDonations] = useState([]);
 
@@ -623,6 +645,11 @@ const totalDonations = donations.length;
 
 const totalCampaigns = campaigns.length;
 
+/**
+ * Builds the last six months of donation totals for the summary chart.
+ *
+ * @returns {Array<{ month: string, year: number, amount: number }>} Donation totals by month.
+ */
 function getMonthlyDonationData() {
 const months = [];
 
@@ -663,6 +690,7 @@ return months;
 
 }
 
+// The chart uses a rolling window of six months so the dashboard stays readable while the app is still in demo mode.
 const monthlyData = getMonthlyDonationData();
 
 return (
@@ -1859,5 +1887,4 @@ ADMIN AREA
 
 );
 }
-
-export default App;
+
